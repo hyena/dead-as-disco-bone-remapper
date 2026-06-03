@@ -296,13 +296,13 @@ class DaDRenamePanel(Panel):
         
         lhs = row.column()
         lhs_bones = []
-        for bone in ['upperarm_l', 'lowerarm_l', 'hand_l', 'thigh_l', 'calf_l']:
+        for bone in ['upperarm_l', 'lowerarm_l', 'hand_l', 'thigh_l', 'calf_l', 'foot_l']:
             lhs.label(text="--- " + bone + " ---")
             for bone in OPTIONAL_BONES[bone]:
                 mapping = bone_props[bone]
                 lhs.prop_search(mapping, "custom_bone_name", custom_armature, "bones", text=mapping.charlie_bone_name)
                 lhs_bones.append(bone)
-        lhs.label(text='pelvis')
+        lhs.label(text='--- pelvis ---')
         mapping = bone_props['def_buttock_l']
         lhs.prop_search(mapping, "custom_bone_name", custom_armature, "bones", text=mapping.charlie_bone_name)
         lhs_bones.append('def_buttock_l')
@@ -311,13 +311,13 @@ class DaDRenamePanel(Panel):
         
         rhs = row.column()
         rhs_bones = []
-        for bone in ['upperarm_r', 'lowerarm_r', 'hand_r', 'thigh_r', 'calf_r']:
+        for bone in ['upperarm_r', 'lowerarm_r', 'hand_r', 'thigh_r', 'calf_r', 'foot_r']:
             rhs.label(text="--- " + bone + " ---")
             for bone in OPTIONAL_BONES[bone]:
                 mapping = bone_props[bone]
                 rhs.prop_search(mapping, "custom_bone_name", custom_armature, "bones", text=mapping.charlie_bone_name)
                 rhs_bones.append(bone)
-        rhs.label(text='pelvis')
+        rhs.label(text='--- pelvis ---')
         mapping = bone_props['def_buttock_r']
         rhs.prop_search(mapping, "custom_bone_name", custom_armature, "bones", text=mapping.charlie_bone_name)
         rhs_bones.append('def_buttock_r')
