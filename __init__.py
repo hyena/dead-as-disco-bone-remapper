@@ -175,7 +175,7 @@ class RenameBonesAndUpdateArmature(Operator):
         bpy.ops.object.join()
         
         # Go through all the bones now and make sure the hierarchy fits
-        # and bone rotations match.
+        # and bone roll matches.
         # Use Charlie's armature as a reference.
         context.view_layer.objects.active = charlie_armature
         bpy.ops.object.mode_set(mode = 'EDIT')
@@ -193,13 +193,25 @@ class RenameBonesAndUpdateArmature(Operator):
             parent = edit_bones[parent_name]
             bone.parent = parent
 
-        # Set up bone roll.
-        # Save symmetry setting for later.
+        # Save symmetry setting to restore later.
         old_use_mirror = custom_armature.data.use_mirror_x
         custom_armature.data.use_mirror_x = False
+
+        # Make all bones have the same head-->tail orientation as Charlie's.
+        head_tail_deltas = {}
+        for bone in charlie_armature.data.edit_bones:
+            head_tail_deltas[bone.name] = bone.tail - bone.head
+        # Before we move anything, disconnect everything.
+        for bone in custom_armature.data.edit_bones:
+            bone.use_connect = False
+        for bone in custom_armature.data.edit_bones:
+            if not bone.name in head_tail_deltas:
+                continue
+            bone.tail = bone.head + head_tail_deltas[bone.name]
+
+        # Set up bone roll.
         for bone in charlie_armature.data.edit_bones:
             custom_armature.data.edit_bones[bone.name].roll = bone.roll
-        custom_armature.data.use_mirror_x = old_use_mirror
 
         # Move IK bones to their corresponding limb bones.
         for ik_bone in IK_MAP:
@@ -208,6 +220,8 @@ class RenameBonesAndUpdateArmature(Operator):
             bone_to_move.head = bone_target.head
             bone_to_move.tail = bone_target.tail
 
+        
+        custom_armature.data.use_mirror_x = old_use_mirror
         return {'FINISHED'}
 
 
