@@ -160,7 +160,6 @@ class RenameBonesAndUpdateArmature(Operator):
         bpy.ops.object.location_clear()
         
         # Enter edit mode and rip out the bones that aren't in the custom armature after 
-        
         bpy.ops.object.mode_set(mode = 'EDIT')
         for bone in dup_charlie.data.edit_bones:
             if bone.name not in custom_armature.data.bones:
@@ -175,12 +174,17 @@ class RenameBonesAndUpdateArmature(Operator):
         context.view_layer.objects.active = custom_armature
         bpy.ops.object.join()
         
-        # Go through all the bones now and make sure the hierarchy fits.
+        # Go through all the bones now and make sure the hierarchy fits
+        # and bone rotations match.
         # Use Charlie's armature as a reference.
-        bone_parents = {}
-        for bone in charlie_armature.data.bones:
-            bone_parents[bone.name] = bone.parent.name if bone.parent else None
+        context.view_layer.objects.active = charlie_armature
         bpy.ops.object.mode_set(mode = 'EDIT')
+        context.view_layer.objects.active = custom_armature
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        bone_parents = {}
+        for bone in charlie_armature.data.edit_bones:
+            bone_parents[bone.name] = bone.parent.name if bone.parent else None
+
         edit_bones = custom_armature.data.edit_bones
         for bone_name, parent_name in bone_parents.items():
             if parent_name is None:
@@ -188,6 +192,14 @@ class RenameBonesAndUpdateArmature(Operator):
             bone = edit_bones[bone_name]
             parent = edit_bones[parent_name]
             bone.parent = parent
+
+        # Set up bone roll.
+        # Save symmetry setting for later.
+        old_use_mirror = custom_armature.data.use_mirror_x
+        custom_armature.data.use_mirror_x = False
+        for bone in charlie_armature.data.edit_bones:
+            custom_armature.data.edit_bones[bone.name].roll = bone.roll
+        custom_armature.data.use_mirror_x = old_use_mirror
 
         # Move IK bones to their corresponding limb bones.
         for ik_bone in IK_MAP:
@@ -228,9 +240,7 @@ class DaDRenamePanel(Panel):
         # Don't display mappings till we have an armature selected
         if not scene.custom_armature or not scene.charlie_armature:
             return
-        print(scene.custom_armature.name)
         custom_armature = scene.custom_armature.data
-        print(custom_armature)
         layout.label(text="======Required Bones======")
         box = layout.box()
         center_bones = [b for b in REQUIRED_BONES if not b.endswith('_l') and not b.endswith('_r')]
@@ -238,12 +248,10 @@ class DaDRenamePanel(Panel):
         rhs_bones = [b for b in REQUIRED_BONES if b.endswith('_r')]
         
         col = box.column()
-        print("Start")
         for bone in reversed(center_bones):
             mapping = bone_props[bone]
             col.prop_search(mapping, "custom_bone_name", custom_armature, "bones", text=mapping.charlie_bone_name)
         col.separator()
-        print("one")
         row = col.row()
         lhs = row.column()
         for bone in lhs_bones:
@@ -258,7 +266,6 @@ class DaDRenamePanel(Panel):
             rhs.prop_search(mapping, "custom_bone_name", custom_armature, "bones", text=mapping.charlie_bone_name)
         op = rhs.operator(MirrorBonesOperator.bl_idname, text="<---- Mirror names")
         op.from_list = ','.join(rhs_bones)
-        print("Through")
         layout.separator()
         layout.separator()
         layout.label(text="======Finger Bones======")
@@ -402,7 +409,6 @@ def register():
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
-        del bpy.types.Scene.targetArmature
 
 
 if __name__ == "__main__":
